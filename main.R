@@ -11,6 +11,7 @@ Y <- as.matrix(pbc2[,20])
 
 pbc2$treatment <- as.factor(pbc2$treatment)
 pbc2$sex <- as.factor(pbc2$sex)
+pbc2$edema <- as.factor(pbc2$edema)
 pbc2$ascites <- as.factor(pbc2$ascites)
 pbc2$hepatom <- as.factor(pbc2$hepatom)
 pbc2$spiders <- as.factor(pbc2$spiders)
