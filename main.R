@@ -11,8 +11,8 @@ Y <- as.matrix(pbc2[,20])
 
 pbc2$treatment <- as.factor(pbc2$treatment)
 pbc2$sex <- as.factor(pbc2$sex)
-pbc2$edema <- as.factor(pbc2$edema)
 pbc2$ascites <- as.factor(pbc2$ascites)
+pbc2$edema <- as.factor(pbc2$edema)
 pbc2$hepatom <- as.factor(pbc2$hepatom)
 pbc2$spiders <- as.factor(pbc2$spiders)
 pbc2$stage <- as.factor(pbc2$stage)
@@ -29,3 +29,12 @@ pbc2$stage <- as.factor(pbc2$stage)
 #rf_res <- randomForest::randomForest(x = pbc2[,-c(1,2,20)],y=as.factor(pbc2[,20]))
 #predict(rf_res)
 rf1<-randomForest(logTime ~ ., data=pbc2, importance=T)
+rf1$importance
+
+library(survival)
+library(MASS)
+LogNormalReg <- survreg(Surv(pbc2$logTime)~.,data=pbc2, dist = "weibull")
+summary(LogNormalReg)
+
+res.cox1 <- coxph(Surv(pbc2$logTime)~., data =  pbc2)
+summary(res.cox1)
