@@ -36,7 +36,19 @@ library(MASS)
 LogNormalReg <- survreg(Surv(pbc2$logTime)~.,data=pbc2, dist = "weibull")
 summary(LogNormalReg)
 
-res.cox1 <- coxph(Surv(pbc2$logTime)~., data =  pbc2)
+#Cox Model
+pbc$SurvObj <- with(pbc, Surv(time, status == 1))
+pbc1<-pbc[,-(1:2)]
+
+pbc1$treatment <- as.factor(pbc1$treatment)
+pbc1$sex <- as.factor(pbc1$sex)
+pbc1$ascites <- as.factor(pbc1$ascites)
+pbc1$edema <- as.factor(pbc1$edema)
+pbc1$hepatom <- as.factor(pbc1$hepatom)
+pbc1$spiders <- as.factor(pbc1$spiders)
+pbc1$stage <- as.factor(pbc1$stage)
+
+res.cox1 <- coxph(pbc1$SurvObj~., data =  pbc1)
 summary(res.cox1)
 
 # --- Step Function (example with different data)---#
