@@ -36,28 +36,26 @@ library(MASS)
 LogNormalReg <- survreg(Surv(pbc2$logTime)~.,data=pbc2, dist = "weibull")
 summary(LogNormalReg)
 
-#Cox Model
-pbc$SurvObj <- with(pbc, Surv(time, status == 1))
-pbc1<-pbc[,-(1:2)]
+# --- Cox model ---
+pbc$time <- with(pbc, Surv(time, status == 1))
 
-pbc1$treatment <- as.factor(pbc1$treatment)
-pbc1$sex <- as.factor(pbc1$sex)
-pbc1$ascites <- as.factor(pbc1$ascites)
-pbc1$edema <- as.factor(pbc1$edema)
-pbc1$hepatom <- as.factor(pbc1$hepatom)
-pbc1$spiders <- as.factor(pbc1$spiders)
-pbc1$stage <- as.factor(pbc1$stage)
+pbc$treatment <- as.factor(pbc$treatment)
+pbc$sex <- as.factor(pbc$sex)
+pbc$edema <- as.factor(pbc$edema)
+pbc$ascites <- as.factor(pbc$ascites)
+pbc$hepatom <- as.factor(pbc$hepatom)
+pbc$spiders <- as.factor(pbc$spiders)
+pbc$stage <- as.factor(pbc$stage)
 
-res.cox1 <- coxph(pbc1$SurvObj~., data =  pbc1)
-summary(res.cox1)
+pbc.cox <- pbc[,-2]
+full.cox <- coxph(time ~ ., data =  pbc.cox)
+summary(full.cox)
 
-# --- Step Function (example with different data)---#
-set.seed(625)
-# Define a base model - intercept only
-HSP.data$Y.level = as.numeric(HSP.data$Y.level)
-null.model <- lm(Y.level ~ 1 , data=HSP.data)
-# Define the full model - including all predictors
-full.model <- lm(Y.level ~ . , data=HSP.data)
-HSP_step   <- step(null.model, scope=list(lower=null.model, upper=full.model), direction = 'both', k=2, trace = F)
-summary(HSP_step); HSP_step
+null.cox <- coxph(time ~ 1, data =  pbc.cox)
+summary(null.cox)
+# res.zph1 <- cox.zph(res.cox1)
+# plot(res.zph1)
+
+cox_step <- step(null.cox, scope=list(lower=null.cox, upper=full.cox), direction = 'both', k=2, trace = F)
+summary(cox_step)
 
