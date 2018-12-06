@@ -38,3 +38,14 @@ summary(LogNormalReg)
 
 res.cox1 <- coxph(Surv(pbc2$logTime)~., data =  pbc2)
 summary(res.cox1)
+
+# --- Step Function (example with different data)---#
+set.seed(625)
+# Define a base model - intercept only
+HSP.data$Y.level = as.numeric(HSP.data$Y.level)
+null.model <- lm(Y.level ~ 1 , data=HSP.data)
+# Define the full model - including all predictors
+full.model <- lm(Y.level ~ . , data=HSP.data)
+HSP_step   <- step(null.model, scope=list(lower=null.model, upper=full.model), direction = 'both', k=2, trace = F)
+summary(HSP_step); HSP_step
+
