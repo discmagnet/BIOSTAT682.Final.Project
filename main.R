@@ -26,9 +26,9 @@ pbc2$stage <- as.factor(pbc2$stage)
 #randomForest::randomForest(x = pbc2[,-c(1,2,20)],y=as.factor(pbc2[,20]))
 #rf_res <- randomForest::randomForest(x = pbc2[,-c(1,2,20)],y=as.factor(pbc2[,20]))
 #predict(rf_res)
-<<<<<<< HEAD
+
 rf1<-randomForest::randomForest(logTime ~ ., data=pbc2, importance=T)
-=======
+
 rf1<-randomForest(logTime ~ ., data=pbc2, importance=T)
 rf1$importance
 
@@ -59,5 +59,3 @@ summary(null.cox)
 
 cox_step <- step(null.cox, scope=list(lower=null.cox, upper=full.cox), direction = 'both', k=2, trace = F)
 summary(cox_step)
-
->>>>>>> 2524aee0516618cc60eeec855409beb014571962
