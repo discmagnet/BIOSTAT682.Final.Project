@@ -17,8 +17,6 @@ pbc2$hepatom <- as.factor(pbc2$hepatom)
 pbc2$spiders <- as.factor(pbc2$spiders)
 pbc2$stage <- as.factor(pbc2$stage)
 
-
-
 #BLASSO<-blasso(X, Y, T = 1000, thin = 1, RJ = TRUE, M = NULL,
 #       beta = NULL, lambda2 = 1, s2 = var(Y-mean(Y)),
 #      icept = TRUE, 
@@ -28,4 +26,4 @@ pbc2$stage <- as.factor(pbc2$stage)
 #randomForest::randomForest(x = pbc2[,-c(1,2,20)],y=as.factor(pbc2[,20]))
 #rf_res <- randomForest::randomForest(x = pbc2[,-c(1,2,20)],y=as.factor(pbc2[,20]))
 #predict(rf_res)
-rf1<-randomForest(logTime ~ ., data=pbc2, importance=T)
+rf1<-randomForest::randomForest(logTime ~ ., data=pbc2, importance=T)
