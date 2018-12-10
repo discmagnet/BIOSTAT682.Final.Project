@@ -12,6 +12,7 @@ x <- pbc[,c("drug","sex","ascites","hepatom","spiders","edema1","age","bili","ch
 
 temp = scale(x[,7:16])
 x_new = cbind(x[,1:6],temp,x[,17])
+colnames(x_new)<-colnames(x)
 
 t<-pbc$time
 is.na(t)<-pbc$status==0
