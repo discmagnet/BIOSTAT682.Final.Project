@@ -1,6 +1,7 @@
-setwd("~/Documents/U Mich Biostats/Biostats 682")
-
 rm(list=ls(all=TRUE))
+
+setwd("~/Downloads/2018_Fall/682/proj")
+library(R2jags)
 
 pbc<-read.csv("https://raw.githubusercontent.com/MLSurvival/ESP/master/ESP_TKDE2016/Dataset/pbc.csv")
 pbc$drug <- 1*(pbc$treatment==1)
@@ -12,17 +13,16 @@ x <- pbc[,c("drug","sex","ascites","hepatom","spiders","edema1","age","bili","ch
 
 temp = scale(x[,7:16])
 x_new = cbind(x[,1:6],temp,x[,17])
-colnames(x_new)<-colnames(x)
+colnames(x_new) <- colnames(x)
 
-t<-pbc$time
+t<-(pbc$time)/365
 is.na(t)<-pbc$status==0
 
 is.censored<-1-pbc$status
-t.cen<-pbc$time+10*pbc$status #+1
+t.cen<-(pbc$time)/365 + pbc$status
 
-tinits1<-pbc$time+500
+tinits1<-(pbc$time)/365 + 5
 is.na(tinits1)<-pbc$status==1
-#tinits2<-tinits1+5
 
 set.seed(8102)
 train_int <- sample(nrow(pbc),floor(nrow(pbc)*0.8))
@@ -37,6 +37,7 @@ tinits1.train = tinits1[train_int];
 tinits1.test = tinits1[-train_int]
 x.train = x_new[train_int,]; 
 x.test = x_new[-train_int,]
+
 
 surv_model = function(){
   for(i in 1:n_train) {
