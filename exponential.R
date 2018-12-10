@@ -76,3 +76,30 @@ pbcjags = jags(
         model.file = surv_model)
 
 print(pbcjags)
+
+# DIC 
+DIC = pbcjags$BUGSoutput$DIC
+# pD
+pD  = pbcjags$BUGSoutput$pD
+
+
+mcmc_fit <- as.mcmc(pbcjags)
+#predicted time
+t_pred_sample <- mcmc_fit[[1]][,paste("t.pred[",1:nrow(x.test),"]",sep="")]
+t_pred=apply(t_pred_sample,2,mean)
+t_pred_CI = apply(t_pred_sample,2,quantile,prob=c(0.025,0.975))
+
+t_pred_lcl = t_pred_CI[1,]; t_pred_ucl = t_pred_CI[2,]
+
+#beta
+beta_res = mcmc_fit[[1]][,c(paste0("beta[",1:17,"]"), "beta0")]
+
+# remove missing values
+t_pred_new <- t_pred[-which(is.na(t.test))]
+t.test.new <- as.double(na.omit(t.test))
+t_pred_lcl_new <- t_pred_lcl[-which(is.na(t.test))]
+t_pred_ucl_new <- t_pred_ucl[-which(is.na(t.test))]
+# PMSE
+PMSE = mean((t_pred_new-t.test.new)^2)
+# coverage
+coverage = mean((t.test.new> t_pred_lcl_new)&(t.test.new< t_pred_ucl_new))
