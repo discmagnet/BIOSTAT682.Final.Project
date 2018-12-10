@@ -11,6 +11,9 @@ pbc$edema1 <- 1*((pbc$edema == 1)|(pbc$edema == 0.5))
 
 x <- pbc[,c("drug","sex","ascites","hepatom","spiders","edema1","age","bili","chol","albumin","copper","alk","sgot","trig","platelet","prothrombin","stage4")]
 
+temp = scale(x[,7:16])
+x_new = cbind(x[,1:6],temp,x[,17])
+
 t<-pbc$time
 is.na(t)<-pbc$status==0
 
@@ -32,23 +35,23 @@ t.cen.train = t.cen[train_int];
 t.cen.test = t.cen[-train_int]
 tinits1.train = tinits1[train_int]; 
 tinits1.test = tinits1[-train_int]
-x.train = x[train_int,]; 
-x.test = x[-train_int,]
+x.train = x_new[train_int,]; 
+x.test = x_new[-train_int,]
 
 surv_model = function(){
         for(i in 1:n_train) {
                 is.censored.train[i] ~ dinterval(t.train[i], t.cen.train[i])
                 t.train[i] ~ dexp(lambda.train[i])
-                lambda.train[i] = exp(beta0 + inprod(x.train[i,],beta))
+                log(lambda.train[i]) <- beta0 + inprod(x.train[i,],beta)
         }
-        beta0 ~ dnorm(0,0.001)
+        beta0 ~ dnorm(0,1)
         
-        for (i in 1:17) {beta[i]  ~ dnorm(0,0.001)}
+        for (i in 1:17) {beta[i]  ~ dnorm(0,1)}
         
         for (i in 1:n_test) {
                 is.censored.test[i] ~ dinterval(t.pred[i], t.cen.test[i])
                 t.pred[i] ~ dexp(lambda.pred[i])
-                lambda.pred[i] = exp(beta0 + inprod(x.test[i,],beta))
+                lambda.pred[i] <- exp(beta0 + inprod(x.test[i,],beta))
         }
 }
 
@@ -57,15 +60,15 @@ pbcdata<-list(n_train=as.integer(length(t.train)),
                 t.train=t.train,
                 is.censored.train=is.censored.train, is.censored.test=is.censored.test,
                 t.cen.train=t.cen.train, t.cen.test=t.cen.test,
-                x.train=x.train, x.test=x.test)
+                x.train=as.matrix(x.train), x.test=as.matrix(x.test))
 
-pbcinits<-list(list(t.train=tinits1.train,
-                      beta0=rnorm(1),
-                      beta =rnorm(17)))
+# pbcinits<-list(list(t.train=tinits1.train,
+#                       beta0=rnorm(1),
+#                       beta =rnorm(17)))
 
 pbcjags = jags(
         data = pbcdata,
-        inits = pbcinits,
+        #inits = pbcinits,
         parameters.to.save = c("t.pred","beta0", "beta"),
         n.chains = 1,
         n.iter = 50000,
@@ -73,11 +76,3 @@ pbcjags = jags(
         model.file = surv_model)
 
 print(pbcjags)
-
-pbc_mcmc = as.mcmc(pbcjags)
-par(ask=T)
-traceplot(pbc_mcmc)
-summary(pbc_mcmc)
-densplot(pbc_mcmc)
-
-View(pbc_mcmc[[1]])
