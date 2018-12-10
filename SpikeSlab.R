@@ -130,3 +130,17 @@ traceplot(res_aft$beta_res)
 autocorr.plot(res_aft$beta_res)
 
 
+#Update MCMC:
+mcmc_fit = as.mcmc(pbcjags)
+#predicted Y
+Y_pred_sample = mcmc_fit[[1]][,paste("t.pred[",1:nrow(x.test),"]",sep="")]
+Y_pred=apply(Y_pred_sample,2,mean)
+Y_pred_CI = apply(Y_pred_sample,2,quantile,prob=c(0.025,0.975))
+
+Y_pred_lcl = Y_pred_CI[1,]
+Y_pred_ucl = Y_pred_CI[2,]
+
+PMSE = mean((Y_pred_new-t.test.new)^2)
+coverage = mean((t.test.new>Y_pred_lcl)&(t.test.new<Y_pred_ucl))
+
+
