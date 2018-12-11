@@ -113,3 +113,16 @@ coverage = mean((t.test.new> t_pred_lcl_new)&(t.test.new< t_pred_ucl_new))
         densityplot(beta_res)
         traceplot(beta_res)
         autocorr.plot(beta_res)
+
+
+# CI Plots
+inte <- c(1:length(t.test.new))
+# plot
+plot(inte, t.test.new, ylim = c(-5,10), type = "l",
+     main= "coverage plot", 
+     xlab= "interations",
+     ylab= "Survival Time")
+polygon(c(inte,rev(inte)),c(t_pred_lcl_new,rev(t_pred_ucl_new)),col = "grey75", border = FALSE)
+lines(inte, t.test.new, lwd = 2)
+lines(inte, t_pred_ucl_new, col="red",lty=2)
+lines(inte, t_pred_lcl_new, col="red",lty=2)
