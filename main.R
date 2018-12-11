@@ -37,25 +37,81 @@ library(MASS)
 LogNormalReg <- survreg(Surv(pbc2$logTime)~.,data=pbc2, dist = "weibull")
 summary(LogNormalReg)
 
-# --- Cox model ---
-pbc$time <- with(pbc, Surv(time, status == 1))
+# --- AFT model ---
+
 
 pbc$treatment <- as.factor(pbc$treatment)
-pbc$sex <- as.factor(pbc$sex)
 pbc$edema <- as.factor(pbc$edema)
 pbc$ascites <- as.factor(pbc$ascites)
 pbc$hepatom <- as.factor(pbc$hepatom)
 pbc$spiders <- as.factor(pbc$spiders)
 pbc$stage <- as.factor(pbc$stage)
+pbc$female <- 1*(pbc$sex == 1)
+pbc$stage4 <- 1*(pbc$stage == 4)
+pbc$edema1 <- 1*((pbc$edema == 1)|(pbc$edema == 0.5))
 
-pbc.cox <- pbc[,-2]
-full.cox <- coxph(time ~ ., data =  pbc.cox)
-summary(full.cox)
+full.aft <- survreg(Surv(time,status) ~ treatment + age + female + ascites + hepatom +
+                      spiders + edema1 + bili + chol + albumin + copper + alk + sgot +
+                      trig + platelet + prothrombin + stage4,
+                    data = pbc,
+                    dist = "lognormal")
+#summary(full.aft)
 
-null.cox <- coxph(time ~ 1, data =  pbc.cox)
-summary(null.cox)
+null.aft <- survreg(Surv(time,status) ~ 1,
+                    data = pbc,
+                    dist = "lognormal")
+#summary(null.aft)
 # res.zph1 <- cox.zph(res.cox1)
 # plot(res.zph1)
 
-cox_step <- step(null.cox, scope=list(lower=null.cox, upper=full.cox), direction = 'both', k=2, trace = F)
-summary(cox_step)
+aft_step <- step(null.aft, scope=list(lower=null.aft, upper=full.aft), direction = 'both', k=2, trace = F)
+summary(aft_step)
+
+# Look at the baseline distribution of survival times
+library(ggplot2)
+plot01 <- ggplot(data = pbc, aes(x=time)) + 
+  geom_histogram(show.legend = FALSE, aes(y = ..density..), 
+    bins = 20,colour = "black",fill = "white") +
+  geom_density(colour = "#4271AE") +
+  labs(x = "Time (in days)", y = "Freq") +
+  ggtitle("Distribution of Survival Times") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+plot01
+
+plot02 <- ggplot(data = pbc, aes(x=logTime)) + 
+  geom_histogram(show.legend = FALSE, aes(y = ..density..), 
+                 bins = 20,colour = "black",fill = "white") +
+  geom_density(colour = "#4271AE") +
+  labs(x = "Time (in log scale)", y = "Freq") +
+  ggtitle("Distribution of Log(Ti)") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+plot02
+
+pbc$Years <- pbc$time/365
+pbc$logYears <- log(pbc$time/365)
+
+plot03 <- ggplot(data = pbc, aes(x=Years)) + 
+  geom_histogram(show.legend = FALSE, aes(y = ..density..), 
+                 bins = 20,colour = "black",fill = "white") +
+  geom_density(colour = "#4271AE") +
+  labs(x = "Time (in years)", y = "Freq") +
+  ggtitle("Distribution of Survival Times") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+plot03
+
+plot04 <- ggplot(data = pbc, aes(x=logYears)) + 
+  geom_histogram(show.legend = FALSE, aes(y = ..density..), 
+                 bins = 20,colour = "black",fill = "white") +
+  geom_density(colour = "#4271AE") +
+  labs(x = "Time (in log scale)", y = "Freq") +
+  ggtitle("Distribution of Log(Ti)") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+plot04
+
+# ploting simple KM curves
+
+pbc$SurvObj <- with(pbc,Surv(time,status == 1))
+km.as.one <- survfit(SurvObj ~ 1, data = pbc, conf.type = "log-log")
+plot(km.as.one)
+
+km.by.sex <- survfit(SurvObj ~ 1, data = pbc, conf.type = "log-log")
