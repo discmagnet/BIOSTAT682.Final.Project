@@ -107,3 +107,9 @@ t_pred_ucl_new <- t_pred_ucl[-which(is.na(t.test))]
 PMSE = mean((t_pred_new-t.test.new)^2)
 # coverage
 coverage = mean((t.test.new> t_pred_lcl_new)&(t.test.new< t_pred_ucl_new))
+
+# plots
+        xyplot(beta_res[,1:3])
+        densityplot(beta_res)
+        traceplot(beta_res)
+        autocorr.plot(beta_res)
