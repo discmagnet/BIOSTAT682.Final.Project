@@ -1,6 +1,7 @@
-setwd("~/Documents/U Mich Biostats/Biostats 682")
-
 rm(list=ls(all=TRUE))
+
+setwd("~/Downloads/2018_Fall/682/proj")
+library(R2jags)
 
 pbc<-read.csv("https://raw.githubusercontent.com/MLSurvival/ESP/master/ESP_TKDE2016/Dataset/pbc.csv")
 pbc$drug <- 1*(pbc$treatment==1)
@@ -12,17 +13,16 @@ x <- pbc[,c("drug","sex","ascites","hepatom","spiders","edema1","age","bili","ch
 
 temp = scale(x[,7:16])
 x_new = cbind(x[,1:6],temp,x[,17])
-colnames(x_new)<-colnames(x)
+colnames(x_new) <- colnames(x)
 
-t<-pbc$time
+t<-(pbc$time)/365
 is.na(t)<-pbc$status==0
 
 is.censored<-1-pbc$status
-t.cen<-pbc$time+10*pbc$status #+1
+t.cen<-(pbc$time)/365 + pbc$status
 
-tinits1<-pbc$time+500
+tinits1<-(pbc$time)/365 + 5
 is.na(tinits1)<-pbc$status==1
-#tinits2<-tinits1+5
 
 set.seed(8102)
 train_int <- sample(nrow(pbc),floor(nrow(pbc)*0.8))
@@ -37,6 +37,7 @@ tinits1.train = tinits1[train_int];
 tinits1.test = tinits1[-train_int]
 x.train = x_new[train_int,]; 
 x.test = x_new[-train_int,]
+
 
 surv_model = function(){
   for(i in 1:n_train) {
@@ -67,7 +68,7 @@ pbcdata<-list(n_train=as.integer(length(t.train)),
 #                       beta0=rnorm(1),
 #                       beta =rnorm(17)))
 
-pbcjags_lnorm = jags(
+pbcjags = jags(
   data = pbcdata,
   #inits = pbcinits,
   parameters.to.save = c("t.pred","beta0", "beta"),
@@ -76,31 +77,44 @@ pbcjags_lnorm = jags(
   n.burnin = 1000,
   model.file = surv_model)
 
-print(pbcjags_lnorm)
+print(pbcjags)
 
-# DIC 
-DIC = pbcjags_lnorm$BUGSoutput$DIC
-# pD
-pD  = pbcjags_lnorm$BUGSoutput$pD
+mcmc_fit = as.mcmc(pbcjags)
 
-
-mcmc_fit <- as.mcmc(pbcjags_lnorm)
-#predicted time
-t_pred_sample <- mcmc_fit[[1]][,paste("t.pred[",1:nrow(x.test),"]",sep="")]
-t_pred=apply(t_pred_sample,2,mean)
-t_pred_CI = apply(t_pred_sample,2,quantile,prob=c(0.025,0.975))
-
-t_pred_lcl = t_pred_CI[1,]; t_pred_ucl = t_pred_CI[2,]
-
-#beta
-beta_res = mcmc_fit[[1]][,c(paste0("beta[",1:17,"]"), "beta0")]
-
-# remove missing values
-t_pred_new <- t_pred[-which(is.na(t.test))]
-t.test.new <- as.double(na.omit(t.test))
-t_pred_lcl_new <- t_pred_lcl[-which(is.na(t.test))]
-t_pred_ucl_new <- t_pred_ucl[-which(is.na(t.test))]
-# PMSE
-PMSE = mean((t_pred_new-t.test.new)^2)
-# coverage
-coverage = mean((t.test.new> t_pred_lcl_new)&(t.test.new< t_pred_ucl_new))
+        # DIC 
+        DIC = pbcjags$BUGSoutput$DIC
+        DIC
+        # pD
+        pD  = pbcjags$BUGSoutput$pD
+        pD
+        
+        
+        mcmc_fit <- as.mcmc(pbcjags)
+        #predicted time
+        t_pred_sample <- mcmc_fit[[1]][,paste("t.pred[",1:nrow(x.test),"]",sep="")]
+        t_pred=apply(t_pred_sample,2,mean)
+        t_pred_CI = apply(t_pred_sample,2,quantile,prob=c(0.025,0.975))
+        
+        t_pred_lcl = t_pred_CI[1,]; t_pred_ucl = t_pred_CI[2,]
+        
+        #beta
+        beta_res = mcmc_fit[[1]][,c(paste0("beta[",1:17,"]"), "beta0")]
+        
+        # model evaluation
+        t_pred_new <- t_pred[-which(is.na(t.test))]
+        t.test.new <- as.double(na.omit(t.test))
+        t_pred_lcl_new <- t_pred_lcl[-which(is.na(t.test))]
+        t_pred_ucl_new <- t_pred_ucl[-which(is.na(t.test))]
+        # PMSE
+        PMSE = mean((t_pred_new-t.test.new)^2)
+        PMSE
+        # coverage
+        coverage = mean((t.test.new> t_pred_lcl_new)&(t.test.new< t_pred_ucl_new))
+        coverage
+        
+        # plots
+        xyplot(beta_res[,1:3])
+        densityplot(beta_res)
+        traceplot(beta_res)
+        autocorr.plot(beta_res)
+        
